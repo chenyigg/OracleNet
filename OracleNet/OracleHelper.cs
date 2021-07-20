@@ -26,11 +26,12 @@ namespace OracleNet
         /// <summary>
         /// 批量插入
         /// </summary>
-        /// <param name="sql"></param>
-        /// <param name="connStr"></param>
-        /// <param name="param"></param>
+        /// <param name="sql">sql</param>
+        /// <param name="connStr">连接字符串</param>
+        /// <param name="ArrayBindCount">插入数量</param>
+        /// <param name="param">参数数组</param>
         /// <returns></returns>
-        Task<int> BatchInsert<T>(string sql, string connStr, int ArrayBindCount, params OracleParameter[] param);
+        Task<int> BatchInsert(string sql, string connStr, int ArrayBindCount, params OracleParameter[] param);
     }
 
     public class OracleHelper : IOracleHelper
