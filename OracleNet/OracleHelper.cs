@@ -26,30 +26,24 @@ namespace OracleNet
         /// <summary>
         /// 批量插入
         /// </summary>
-        /// <param name="sql"></param>
-        /// <param name="connStr"></param>
-        /// <param name="param"></param>
+        /// <param name="sql">sql</param>
+        /// <param name="connStr">连接字符串</param>
+        /// <param name="ArrayBindCount">插入数量</param>
+        /// <param name="param">参数数组</param>
         /// <returns></returns>
-        Task<int> BatchInsert<T>(string sql, string connStr, int ArrayBindCount, params OracleParameter[] param);
+        Task<int> BatchInsert(string sql, string connStr, int ArrayBindCount, params OracleParameter[] param);
     }
 
     public class OracleHelper : IOracleHelper
     {
-        private IConfiguration _configuration;
-
         public OracleHelper()
         {
 
         }
 
-        public OracleHelper(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
-
         public async Task<OracleDataReader> GetDataReader(string sql, string connStr, params OracleParameter[] param)
         {
-            using (OracleConnection conn = new OracleConnection(_configuration[$"ConnectionStrings:{connStr}"]))
+            using (OracleConnection conn = new OracleConnection(connStr))
             {
                 try
                 {
@@ -77,7 +71,7 @@ namespace OracleNet
 
         public async Task<DataSet> GetDataSet(string sql, string connStr, params OracleParameter[] param)
         {
-            using (OracleConnection conn = new OracleConnection(_configuration[$"ConnectionStrings:{connStr}"]))
+            using (OracleConnection conn = new OracleConnection(connStr))
             {
                 try
                 {
@@ -110,7 +104,7 @@ namespace OracleNet
 
         public async Task<DataTable> GetDataTable(string sql, string connStr, params OracleParameter[] param)
         {
-            using (OracleConnection conn = new OracleConnection(_configuration[$"ConnectionStrings:{connStr}"]))
+            using (OracleConnection conn = new OracleConnection(connStr))
             {
                 try
                 {
@@ -141,7 +135,7 @@ namespace OracleNet
 
         public async Task<object> GetScalar(string sql, string connStr, params OracleParameter[] param)
         {
-            OracleConnection conn = new OracleConnection(_configuration[$"ConnectionStrings:{connStr}"]);
+            OracleConnection conn = new OracleConnection(connStr);
             try
             {
                 OracleCommand command = new OracleCommand(sql, conn);
@@ -166,54 +160,65 @@ namespace OracleNet
 
         public async Task<int> GetExecuteNonQuery(string sql, string connStr, params OracleParameter[] param)
         {
-            OracleConnection conn = new OracleConnection(_configuration[$"ConnectionStrings:{connStr}"]);
-            try
+            using (OracleConnection conn = new OracleConnection(connStr))
             {
-                OracleCommand command = new OracleCommand(sql, conn);
-                if (param != null && param.Length > 0)
+                try
                 {
-                    command.Parameters.AddRange(param);
+                    using (OracleCommand command = new OracleCommand(sql, conn))
+                    {
+                        if (param != null && param.Length > 0)
+                        {
+                            command.Parameters.AddRange(param);
+                        }
+                        conn.Open();
+                        return await Task.FromResult<int>(command.ExecuteNonQuery());
+                    }
                 }
-                conn.Open();
-                return await Task.FromResult<int>(command.ExecuteNonQuery());
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                    //
+                    return await Task.FromResult<int>(0);
+                }
+                finally
+                {
+                    await conn.CloseAsync();
+                }
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-                //
-                return await Task.FromResult<int>(0);
-            }
-            finally
-            {
-                await conn.CloseAsync();
-            }
+
         }
 
         public async Task<int> BatchInsert(string sql, string connStr, int ArrayBindCount, params OracleParameter[] param)
         {
-            OracleConnection conn = new OracleConnection(_configuration[$"ConnectionStrings:{connStr}"]);
-            try
+            using (OracleConnection conn = new OracleConnection(connStr))
             {
-                OracleCommand command = new OracleCommand(sql, conn);
-                command.ArrayBindCount = ArrayBindCount;            //批量插入记录的条数，一定要赋值
-                command.CommandText = sql;
-                if (param != null && param.Length > 0)
+                try
                 {
-                    command.Parameters.AddRange(param);
+                    using (OracleCommand command = new OracleCommand(sql, conn))
+                    {
+                        command.ArrayBindCount = ArrayBindCount;            //批量插入记录的条数，一定要赋值
+                        command.CommandText = sql;
+                        if (param != null && param.Length > 0)
+                        {
+                            command.Parameters.AddRange(param);
+                        }
+                        conn.Open();
+                        return await Task.FromResult<int>(command.ExecuteNonQuery());
+                    }
                 }
-                conn.Open();
-                return await Task.FromResult<int>(command.ExecuteNonQuery());
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                    //
+                    return await Task.FromResult<int>(0);
+                }
+                finally
+                {
+                    await conn.CloseAsync();
+                }
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-                //
-                return await Task.FromResult<int>(0);
-            }
-            finally
-            {
-                await conn.CloseAsync();
-            }
+
+
         }
     }
 }
