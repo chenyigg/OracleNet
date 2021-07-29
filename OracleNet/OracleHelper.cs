@@ -1,27 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using Oracle.ManagedDataAccess.Client;
+using System;
 using System.Data;
-using System.IO;
-using System.Configuration;
-using Oracle.ManagedDataAccess.Client;
-using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 
 namespace OracleNet
 {
     public interface IOracleHelper
     {
-        Task<OracleDataReader> GetDataReader(string sql, string connStr, params OracleParameter[] param);
+        Task<OracleDataReader> GetDataReaderAsync(string sql, string connStr, params OracleParameter[] param);
 
-        Task<DataSet> GetDataSet(string sql, string connStr, params OracleParameter[] param);
+        Task<DataSet> GetDataSetAsync(string sql, string connStr, params OracleParameter[] param);
 
-        Task<DataTable> GetDataTable(string sql, string connStr, params OracleParameter[] param);
+        Task<DataTable> GetDataTableAsync(string sql, string connStr, params OracleParameter[] param);
 
-        Task<object> GetScalar(string sql, string connStr, params OracleParameter[] param);
+        Task<object> GetScalarAsync(string sql, string connStr, params OracleParameter[] param);
 
-        Task<int> GetExecuteNonQuery(string sql, string connStr, params OracleParameter[] param);
+        Task<int> GetExecuteNonQueryAsync(string sql, string connStr, params OracleParameter[] param);
 
         /// <summary>
         /// 批量插入
@@ -31,7 +25,11 @@ namespace OracleNet
         /// <param name="ArrayBindCount">插入数量</param>
         /// <param name="param">参数数组</param>
         /// <returns></returns>
-        Task<int> BatchInsert(string sql, string connStr, int ArrayBindCount, params OracleParameter[] param);
+        Task<int> BatchInsertAsync(string sql, string connStr, int ArrayBindCount, params OracleParameter[] param);
+
+        DataTable GetDataTable(string sql, string connStr, params OracleParameter[] param);
+
+        public int GetExecuteNonQuery(string sql, string connStr, params OracleParameter[] param);
     }
 
     public class OracleHelper : IOracleHelper
@@ -41,7 +39,7 @@ namespace OracleNet
 
         }
 
-        public async Task<OracleDataReader> GetDataReader(string sql, string connStr, params OracleParameter[] param)
+        public async Task<OracleDataReader> GetDataReaderAsync(string sql, string connStr, params OracleParameter[] param)
         {
             using (OracleConnection conn = new OracleConnection(connStr))
             {
@@ -69,7 +67,7 @@ namespace OracleNet
 
         }
 
-        public async Task<DataSet> GetDataSet(string sql, string connStr, params OracleParameter[] param)
+        public async Task<DataSet> GetDataSetAsync(string sql, string connStr, params OracleParameter[] param)
         {
             using (OracleConnection conn = new OracleConnection(connStr))
             {
@@ -102,7 +100,7 @@ namespace OracleNet
 
         }
 
-        public async Task<DataTable> GetDataTable(string sql, string connStr, params OracleParameter[] param)
+        public async Task<DataTable> GetDataTableAsync(string sql, string connStr, params OracleParameter[] param)
         {
             using (OracleConnection conn = new OracleConnection(connStr))
             {
@@ -132,8 +130,7 @@ namespace OracleNet
             }
         }
 
-
-        public async Task<object> GetScalar(string sql, string connStr, params OracleParameter[] param)
+        public async Task<object> GetScalarAsync(string sql, string connStr, params OracleParameter[] param)
         {
             OracleConnection conn = new OracleConnection(connStr);
             try
@@ -158,7 +155,7 @@ namespace OracleNet
             }
         }
 
-        public async Task<int> GetExecuteNonQuery(string sql, string connStr, params OracleParameter[] param)
+        public async Task<int> GetExecuteNonQueryAsync(string sql, string connStr, params OracleParameter[] param)
         {
             using (OracleConnection conn = new OracleConnection(connStr))
             {
@@ -188,7 +185,7 @@ namespace OracleNet
 
         }
 
-        public async Task<int> BatchInsert(string sql, string connStr, int ArrayBindCount, params OracleParameter[] param)
+        public async Task<int> BatchInsertAsync(string sql, string connStr, int ArrayBindCount, params OracleParameter[] param)
         {
             using (OracleConnection conn = new OracleConnection(connStr))
             {
@@ -218,6 +215,65 @@ namespace OracleNet
                 }
             }
 
+
+        }
+
+        public DataTable GetDataTable(string sql, string connStr, params OracleParameter[] param)
+        {
+            using (OracleConnection conn = new OracleConnection(connStr))
+            {
+                try
+                {
+                    OracleCommand command = new OracleCommand(sql, conn);
+
+                    if (param != null && param.Length > 0)
+                    {
+                        command.Parameters.AddRange(param);
+                    }
+                    conn.Open();
+                    OracleDataAdapter dataDapter = new OracleDataAdapter(command);
+                    DataTable dt = new DataTable();
+                    dataDapter.Fill(dt);
+                    return dt;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    return null;
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+        }
+
+        public int GetExecuteNonQuery(string sql, string connStr, params OracleParameter[] param)
+        {
+            using (OracleConnection conn = new OracleConnection(connStr))
+            {
+                try
+                {
+                    using (OracleCommand command = new OracleCommand(sql, conn))
+                    {
+                        if (param != null && param.Length > 0)
+                        {
+                            command.Parameters.AddRange(param);
+                        }
+                        conn.Open();
+                        return command.ExecuteNonQuery();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                    return 0;
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
 
         }
     }
