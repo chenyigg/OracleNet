@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Version>5.0.2</Version>
     <Authors>ChenYi</Authors>
-    <Description>ODP.NET，提供CRUD以及批量插入,新增异步、同步方法</Description>
+    <Description>ODP.NET，提供CRUD以及批量插入,新增异步、同步方法，源码地址：https://github.com/chenyigg/OracleNet</Description>
   </PropertyGroup>
 
   <ItemGroup>
